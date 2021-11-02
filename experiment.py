@@ -15,7 +15,7 @@ Synthetic Experiment
 '''
 def synth_exp(ns, nmb_models, dest_dir, dims, ts, alpha0s, sample_alphas, sample_mus, sample_sigmas, sigma_eps= 1e-3, seed = None, save_intermediate=False, *args, **kwargs):
     '''
-    Synthetic Experiment for ICML
+    Synthetic Experiment for JMVA
 
     @Params:
         ns...                   number of data for learning (list)
