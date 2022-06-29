@@ -492,37 +492,34 @@ def tensor_power_method(T, rank, max_iterations=1000, max_searches=150, dev='cpu
     e_values = torch.zeros(rank).to(device)
     e_vectors = torch.zeros((d,rank)).to(device)
     
-    I = torch.eye(d)
+    I = torch.eye(d, dtype=torch.double)
     T_tmp = T.clone()
     for k in range(rank):
         conv = False
         count_search = 0
         while not conv and count_search<max_searches:
             count_search += 1
-            e_vector = (torch.rand(d)*2-1).to(device)
+            e_vector = (torch.rand(d,dtype=torch.double)*2-1).to(device)
             e_vector /= torch.norm(e_vector)
             count_it = 0
             while not conv and count_it<max_iterations:
                 count_it += 1
                 prev_vector = e_vector
-                new_vec = torch.as_tensor(contract_tensor(T_tmp.numpy(), I.numpy(), e_vector.numpy()))
+                new_vec = torch.einsum('ijk,im,j,k->m',T_tmp,I,e_vector,e_vector) 
                 e_vector = (new_vec/torch.norm(new_vec))
                 conv = torch.norm(prev_vector-e_vector).item()<epsilon
+            print(count_it)
         if count_search==max_searches and warn:
             print(f'Warning: Tensor power method did not converge for {k}-th component')
 
         vec = e_vector
-        value = (mult_lin_transf(T_tmp,torch.eye(d).to(device),e_vector,e_vector).flatten()/e_vector.flatten())[0] 
+        value = torch.einsum('hij,h,i,j->',T_tmp,vec,vec,vec)
         # store eigenvalue, eigenvector
         e_values[k] = value
         e_vectors[:,k] = vec
         # deflate tensor
         T_tmp -= value*outer_prod(vec,outer_prod(vec,vec))
         
-    order = torch.argsort(e_values)
-    e_values = e_values[order]
-    e_vectors = e_vectors[:,order]
-
     return e_vectors.double(),e_values.double()
 
 def estimate_variances(mus, alphas, eta, alpha_0=None, dev='cpu', force_pos=False):
