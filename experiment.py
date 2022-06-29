@@ -93,9 +93,12 @@ def synth_exp(ns, nmb_models, dest_dir, dims, ts, alpha0s, sample_alphas, sample
             m.est_vars = est_vars
             m.est_thetas = est_mus
 
+            # We estimate the variance, but the parameters generated above are the std
+            est_sigmas = torch.sqrt(est_vars)
+
             # measure error
             mu_error = torch.mean((est_mus-orig_mus)**2).item()
-            var_error = torch.mean((est_vars-orig_sigmas)**2).item()
+            var_error = torch.mean((est_sigmas-orig_sigmas)**2).item()
             alpha_error = torch.mean((est_alphas-orig_alphas)**2).item()
 
             # put into dataframe + save
@@ -136,7 +139,7 @@ if __name__ == "__main__":
         # sampling of parameters
         'dims' : [128,256,512,1024,2048],
         'ts' : [30,50,70,90],
-        'alpha0s' : [0.1,0.5,1,5,10,50,100],
+        'alpha0s' : [0.01,0.1,0.5,1,5,10,50,100],
         'sample_alphas' : lambda alpha_0,t: utils.sample_uniform_alphas(t, alpha_0),
         'sample_mus' : lambda c,t: utils.create_pairwise_independent_mus(t, c, vmin=-10, vmax=10).T,
         'sample_sigmas' : lambda sigma_eps,t: np.random.uniform(low=sigma_eps, high=2, size=(t,))
